@@ -1,8 +1,8 @@
 use crate::model::main_models::ModelStrut;
-use anyhow::Result;
+use anyhow::{Ok, Result};
 use serde::{Deserialize, Serialize};
 use std::{fs, path::Path};
-use tracing::{error, info};
+use tracing::info;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct H1 {
@@ -20,34 +20,29 @@ impl H1 {
             context: None,
         }
     }
-
-    pub fn test(&mut self) -> &Self {
-        info!("create data test");
-        self.size = Some(16);
-        self.conter = Some(false);
-        self.context = Some("Hello Suomi".to_string());
-        self
-    }
 }
 
 impl ModelStrut for H1 {
-    fn load<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+    fn load<P: AsRef<Path>>(&self, path: P) -> Result<Self, anyhow::Error> {
         let load_file = fs::read_to_string(path)?;
         let h1 = toml::from_str::<H1>(&load_file)?;
-        info!("load data {:#?}", h1);
-        Ok(())
+        info!("Message: Load data: h1");
+        Ok(h1)
     }
 
     fn write(&self) -> Result<()> {
-        let mut data = H1::new();
-        H1::test(&mut data);
+        let data = H1::test();
         let context = toml::to_string_pretty(&data)?;
-        let create = fs::write("test/write/write.toml", context);
-
-        match create {
-            Ok(_) => info!("Ok to write"),
-            Err(e) => error!("{}", e),
-        }
+        fs::write("test/write/write.toml", context)?;
         Ok(())
+    }
+
+    fn test() -> Self {
+        info!("create data test");
+        let mut h1 = H1::new();
+        h1.size = Some(16);
+        h1.conter = Some(false);
+        h1.context = Some("Hello Suomi".to_string());
+        h1
     }
 }
